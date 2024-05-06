@@ -21,7 +21,9 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ItemPipeType extends PipeType<Item> {
@@ -136,7 +138,7 @@ public class ItemPipeType extends PipeType<Item> {
     protected void insertOrdered(PipeLogicTileEntity tileEntity, Direction side, List<PipeTileEntity.Connection> connections, IItemHandler itemHandler) {
         int itemsToTransfer = getRate(tileEntity, side);
 
-        ArrayList<ItemStack> nonFittingItems = new ArrayList<>();
+        HashSet<ItemHash> nonFittingItems = new HashSet<>();
 
         connectionLoop:
         for (PipeTileEntity.Connection connection : connections) {
@@ -156,7 +158,9 @@ public class ItemPipeType extends PipeType<Item> {
                 if (simulatedExtract.isEmpty()) {
                     continue;
                 }
-                if (nonFittingItems.stream().anyMatch(stack -> ItemUtils.isStackable(stack, simulatedExtract))) {
+
+                ItemHash itemHash = ItemHash.of(simulatedExtract);
+                if (nonFittingItems.contains(itemHash)) {
                     continue;
                 }
                 if (canInsert(connection, simulatedExtract, tileEntity.getFilters(side, this)) == tileEntity.getFilterMode(side, this).equals(UpgradeTileEntity.FilterMode.BLACKLIST)) {
@@ -165,7 +169,7 @@ public class ItemPipeType extends PipeType<Item> {
                 ItemStack stack = ItemHandlerHelper.insertItem(destination, simulatedExtract, false);
                 int insertedAmount = simulatedExtract.getCount() - stack.getCount();
                 if (insertedAmount <= 0) {
-                    nonFittingItems.add(simulatedExtract);
+                    nonFittingItems.add(itemHash);
                 }
                 itemsToTransfer -= insertedAmount;
                 itemHandler.extractItem(i, insertedAmount, false);
@@ -273,6 +277,50 @@ public class ItemPipeType extends PipeType<Item> {
             case INFINITY:
             default:
                 return Integer.MAX_VALUE;
+        }
+    }
+
+    private static class ItemHash {
+        private final Item item;
+        private final CompoundTag tag;
+
+        private ItemHash(Item item, CompoundTag tag) {
+            this.item = item;
+            this.tag = tag;
+        }
+
+        private ItemHash(ItemStack stack) {
+            this.item = stack.getItem();
+            this.tag = stack.getTag();
+        }
+
+        public static ItemHash of(ItemStack stack) {
+            return new ItemHash(stack);
+        }
+
+        public static ItemHash of(Item item, CompoundTag tag) {
+            return new ItemHash(item, tag);
+        }
+
+        public Item getItem() {
+            return item;
+        }
+
+        public CompoundTag getTag() {
+            return tag;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ItemHash itemHash = (ItemHash) o;
+            return Objects.equals(item, itemHash.item) && Objects.equals(tag, itemHash.tag);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(item, tag);
         }
     }
 }
