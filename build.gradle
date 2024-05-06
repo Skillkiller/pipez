@@ -11,12 +11,14 @@ apply from: "https://raw.githubusercontent.com/henkelmax/mod-gradle-scripts/${mo
 
 repositories {
     maven { url = 'https://modmaven.dev' }
+    maven { url = "https://www.cursemaven.com" }
 }
 
 dependencies {
     implementation fg.deobf("maven.modrinth:jei:${jei_version}")
     implementation fg.deobf("maven.modrinth:the-one-probe:${theoneprobe_version}")
     implementation fg.deobf("maven.modrinth:jade:${jade_version}")
+    implementation fg.deobf("curse.maven:spark-361579:4738952")
 
     compileOnly "mekanism:Mekanism:${mekanism_version}:api"
     runtimeOnly fg.deobf("mekanism:Mekanism:${mekanism_version}")
