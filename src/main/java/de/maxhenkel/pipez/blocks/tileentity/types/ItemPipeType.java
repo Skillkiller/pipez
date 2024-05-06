@@ -188,6 +188,7 @@ public class ItemPipeType extends PipeType<Item> {
     }
 
     private boolean canInsert(PipeTileEntity.Connection connection, ItemStack stack, List<Filter<?>> filters) {
+        if (filters.isEmpty()) return true;
         for (Filter<Item> filter : filters.stream().map(filter -> (Filter<Item>) filter).filter(Filter::isInvert).filter(f -> matchesConnection(connection, f)).collect(Collectors.toList())) {
             if (matches(filter, stack)) {
                 return false;
